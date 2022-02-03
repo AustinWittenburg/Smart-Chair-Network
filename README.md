@@ -1,2 +1,2 @@
-# Smart-Char-Network
+# Smart-Chair-Network
 Senior Design Project
