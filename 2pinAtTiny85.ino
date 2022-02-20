@@ -39,7 +39,7 @@ RadioPacket _radioData;
 void setup()
 {
     //if (!_radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN))
-    if (!_radio.initTwoPin(RADIO_ID, PIN_RADIO_MOMI, PIN_RADIO_SCK))
+    if (!_radio.initTwoPin(RADIO_ID, PIN_RADIO_MOMI, PIN_RADIO_SCK)) // changed to two pin set up needed the initTwoPin
     {
         while (1); // Cannot communicate with radio.
     }
