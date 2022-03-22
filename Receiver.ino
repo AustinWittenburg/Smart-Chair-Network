@@ -4,8 +4,6 @@ Demonstrates simple RX and TX operation.
 Any of the Basic_TX examples can be used as a transmitter.
 Please read through 'NRFLite.h' for a description of all the methods available in the library.
 
-Works using the Arduino as the hub for the received message.
-
 Radio    Arduino
 CE    -> 9
 CSN   -> 10 (Hardware SPI SS)
@@ -21,6 +19,19 @@ GND   -> GND
 #include "SPI.h"
 #include "NRFLite.h"
 
+#include <Firebase_Arduino_WiFiNINA.h>
+#define FIREBASE_HOST "smartchairnetwork-default-rtdb.firebaseio.com"
+#define FIREBASE_AUTH "2zABpgV9A9QKB4bHIePu35btAJLcGiNG1IUUzPA4"
+#define WIFI_SSID "iPhone"
+#define WIFI_PASSWORD "project123"
+FirebaseData firebaseData;
+
+String path = "/Weight_data";
+String jsonStr;
+
+
+
+
 const static uint8_t RADIO_ID = 0;       // Our radio's id.  The transmitter will send to this id.
 const static uint8_t PIN_RADIO_CE = 9;
 const static uint8_t PIN_RADIO_CSN = 10;
@@ -30,6 +41,7 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
     uint8_t FromRadioId;
     uint32_t OnTimeMillis;
     uint32_t FailedTxCount;
+    long SensorReading;
 };
 
 NRFLite _radio;
@@ -46,6 +58,16 @@ void setup()
     //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE2MBPS, 100) // THE DEFAULT
     //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE1MBPS, 75)
     //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE250KBPS, 0)
+
+    int status = WL_IDLE_STATUS;
+    while (status != WL_CONNECTED) {
+      status = WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+      Serial.print(".");
+      delay(300);
+    }
+
+    Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, WIFI_SSID, WIFI_PASSWORD);
+    Firebase.reconnectWiFi(true);
     
     if (!_radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN))
     {
@@ -68,6 +90,34 @@ void loop()
         msg += _radioData.FailedTxCount;
         msg += " Failed TX";
 
-        Serial.println(msg);
+
+
+        if (Firebase.setFloat(firebaseData, path + "/1-setFloat", _radioData.SensorReading)) {
+          Serial.print("Sending ");
+          Serial.print(_radioData.SensorReading);
+          Serial.println(" to the database");
+        }
+        /*
+        jsonStr = "{\"X\":" + String(x,6) + ",\"Y\":" + String(y,6) + ",\"Z\":" + String(z,6) + "}";
+
+        if (Firebase.pushJSON(firebaseData, path + "/2-pushJSON", jsonStr)) {
+          Serial.println(firebaseData.dataPath() + " = " + firebaseData.pushName());
+        }
+        else {
+          Serial.println("Error: " + firebaseData.errorReason());
+        }
+        */
+        Serial.println();
+          
+        //Serial.println(msg);
+
+        Serial.print("Weight is ");
+        Serial.print(_radioData.SensorReading);
+        Serial.println(" milligrams");
+        delay(1000);
+
+        
+
+        
     }
 }
