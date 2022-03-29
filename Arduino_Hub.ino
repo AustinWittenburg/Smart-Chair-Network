@@ -22,15 +22,12 @@ GND   -> GND
 #include <Firebase_Arduino_WiFiNINA.h>
 #define FIREBASE_HOST "smartchairnetwork-default-rtdb.firebaseio.com"
 #define FIREBASE_AUTH "2zABpgV9A9QKB4bHIePu35btAJLcGiNG1IUUzPA4"
-#define WIFI_SSID "iPhone"
-#define WIFI_PASSWORD "project123"
+#define WIFI_SSID "UI-DeviceNet"
+#define WIFI_PASSWORD "UI-DeviceNet"
 FirebaseData firebaseData;
 
 String path = "/Weight_data";
 String jsonStr;
-
-
-
 
 const static uint8_t RADIO_ID = 0;       // Our radio's id.  The transmitter will send to this id.
 const static uint8_t PIN_RADIO_CE = 9;
@@ -47,8 +44,7 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
 NRFLite _radio;
 RadioPacket _radioData;
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // By default, 'init' configures the radio to use a 2MBPS bitrate on channel 100 (channels 0-125 are valid).
@@ -62,26 +58,29 @@ void setup()
     int status = WL_IDLE_STATUS;
     while (status != WL_CONNECTED) {
       status = WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-      Serial.print(".");
+      Serial.println("No WiFi connection");
       delay(300);
     }
 
+    Serial.println("Connected to WiFi");
+
     Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, WIFI_SSID, WIFI_PASSWORD);
     Firebase.reconnectWiFi(true);
+
+    Serial.println("Connected to Firebase");
     
-    if (!_radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN))
-    {
+    if (!_radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN)) {
         Serial.println("Cannot communicate with radio");
         while (1); // Wait here forever.
     }
+
+    Serial.println("Connected to Radio");
 }
 
-void loop()
-{
-    while (_radio.hasData())
-    {
+void loop() {
+    while (_radio.hasData()) {
         _radio.readData(&_radioData); // Note how '&' must be placed in front of the variable name.
-
+        
         String msg = "Radio ";
         msg += _radioData.FromRadioId;
         msg += ", ";
@@ -89,8 +88,6 @@ void loop()
         msg += " ms, ";
         msg += _radioData.FailedTxCount;
         msg += " Failed TX";
-
-
 
         if (Firebase.setFloat(firebaseData, path + "/1-setFloat", _radioData.SensorReading)) {
           Serial.print("Sending ");
@@ -107,17 +104,13 @@ void loop()
           Serial.println("Error: " + firebaseData.errorReason());
         }
         */
-        Serial.println();
-          
-        //Serial.println(msg);
+
+        Serial.println(msg);
 
         Serial.print("Weight is ");
         Serial.print(_radioData.SensorReading);
         Serial.println(" milligrams");
         delay(1000);
 
-        
-
-        
     }
 }
