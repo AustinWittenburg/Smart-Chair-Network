@@ -7,6 +7,8 @@
 //Arduino Uno and HX711 Wiring Setup
 const int LOADCELL_DOUT_PIN = 4;
 const int LOADCELL_DOUT_SCK = 5;
+float known_weight = 0;
+float CF = 0;
 
 HX711 scale;
 
@@ -16,19 +18,48 @@ void setup() {
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_DOUT_SCK);
   
   Serial.println("HX711 Calibration");
-  
-  scale.set_scale(4.5422);
-  Serial.println("scale.set_scale completed");
-  scale.tare();
-  Serial.println("scale.tare completed");
-  Serial.println("Please place a know weight on the scale");
-  
 
+  //set_scale uses the calibration constant to set the scaling for the weight data.
+  scale.set_scale();
+  Serial.println("scale.set_scale completed"); // Notifying the user scale constant was set
+  //This tares the weight sensors giving it an initial value of zero to start. Make sure there is no weight on the sensors.
+  scale.tare();
+  Serial.println("scale.tare completed"); //Notifying user the tare was completed
+
+
+ Serial.println("Please place a know weight on the scale. Enter the known weight in grams and then hit enter.");
+  while (Serial.available() == 0){
+    //This waits for the user to enter y and then goes on with reading weight data.
+  }
+  
+  if (Serial.available() > 0) {
+    known_weight = Serial.parseInt();       // get the number
+  
+    // check if a number was received
+    if (known_weight > 0) {
+      Serial.print("Number received: ");
+      Serial.println(known_weight);
+    }
+    else {
+      Serial.println("Not a number.");
+    }
+  }
+
+    for (int i = 0; i < 20; i++){
+      CF += scale.get_units();
+      Serial.println(CF);
+    }
+    CF = CF/20.0;
+    Serial.println(CF);
+    CF = CF/known_weight;
+    Serial.print("Calibration Factor:");
+    Serial.println(CF);
 }
 
 void loop() {
-
-  scale.get_units(10);
-  Serial.println(scale.get_units(10));
+  
+  scale.set_scale(CF);
+  scale.get_units();
+  Serial.println(scale.get_units());
 
 }
